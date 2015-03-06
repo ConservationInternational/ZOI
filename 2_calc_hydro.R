@@ -21,17 +21,16 @@ foreach (sitecode=sitecodes) %do% {
     dem_folder <- file.path(zoi_folder, sitecode, "DEM")
     dem_filename <- file.path(dem_folder, paste0(sitecode, '_dem.tif'))
 
-    # Location of your GRASS installation:
-    loc <- initGRASS("C:/Program Files (x86)/GRASS GIS 7.0.0", home=tempdir())
-    execGRASS("r.in.gdal", flags="o", parameters=list(input=dem_filename, output="DEM"))
-    execGRASS("g.region", parameters=list(raster="DEM"))
-    gmeta()
-
+    # Set thresholds for minimum catchment size
     thresholds <- as.integer(c((10*1e6/(30*30)),
                                100*1e6/(30*30)))
     ids <- letters[1:length(thresholds)]
-    # Set a threshold of 10km^2
     streamvecs <- foreach (threshold=thresholds, id=ids) %do% {
+        # Location of your GRASS installation:
+        loc <- initGRASS("C:/Program Files (x86)/GRASS GIS 7.0.0", home=tempdir(), override=TRUE)
+        execGRASS("r.in.gdal", flags="o", parameters=list(input=dem_filename, output="DEM"))
+        execGRASS("g.region", parameters=list(raster="DEM"))
+
         # extract the drainage network:
         execGRASS("r.watershed",
                   flags="overwrite", 
@@ -65,7 +64,18 @@ foreach (sitecode=sitecodes) %do% {
         return(out)
     }
 
-    plot(streamvecs[1])
-    plot(streamvecs[2])
-
 }
+
+plot(streamvecs[1]$stream)
+plot(streamvecs[1]$basin)
+
+stream_a <- raster(readRAST("stream_a"))
+basin_a <- raster(readRAST("basin_a"))
+
+stream_b_rast <- raster(readRAST("stream_b"))
+basin_b_rast <- raster(readRAST("basin_b"))
+
+stream_b_vec <- readVECT("streamvec_b")
+basin_b_vec <- readVECT("basinvec_b")
+
+plot(readRAST("streamt_b"))

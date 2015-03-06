@@ -1,5 +1,6 @@
 source('0_settings.R')
 
+library(gdalUtils)
 library(rgdal)
 library(rgeos)
 library(foreach)
@@ -63,17 +64,16 @@ setup_zoi_dem <- function(aoi, output_path, dem_extents, of="GTiff",
     # Calculate minimum bounding box coordinates:
     dem_te <- as.numeric(bbox(aoi))
     to_res <- res(dem_rasts[[1]])
-    dem_te <- teamlucc:::normalize_extent(dem_te, to_res)
 
     # Mosaic DEMs, using mosaic_rasters from gdalUtils for speed:
     dem_mosaic <- mosaic_rasters(dem_list, dem_filename, te=dem_te, 
                                  tr=to_res, output_Raster=TRUE, 
                                  multi=TRUE, wo=paste0("NUM_THREADS=", n_cpus), 
-                                 overwrite=overwrite, ot='Int16')
+                                 overwrite=overwrite, ot='Int16', tap=TRUE)
 
-    slopeaspect_filename <- file.path(output_path,
-                                      paste0(sitecode, '_slopeaspect.', ext))
-    # Note that the default output of 'terrain' is in radians
-    slopeaspect <- terrain(dem_mosaic, opt=c('slope', 'aspect'), 
-                           filename=slopeaspect_filename, overwrite=overwrite)
+    # slopeaspect_filename <- file.path(output_path,
+    #                                   paste0(sitecode, '_slopeaspect.', ext))
+    # # Note that the default output of 'terrain' is in radians
+    # slopeaspect <- terrain(dem_mosaic, opt=c('slope', 'aspect'), 
+    #                        filename=slopeaspect_filename, overwrite=overwrite)
 }
